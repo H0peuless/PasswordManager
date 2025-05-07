@@ -24,13 +24,16 @@ string generatePassword(int size){
 }
 
 //--------Hashing function-----------------
-string hashing(string s){
-    unsigned long hash = 5381;
-    for (int i = 0; i < s.length(); i++) {
-        hash = ((hash << 5) + hash) + s[i];
-    }
-    return to_string(hash);
+string hashing(const string& s) {
+    char hex[SHA256_HEX_SIZE + 1];
+    sha256_hex(s.c_str(), s.length(), hex);
+    hex[SHA256_HEX_SIZE] = '\0';
+
+    return string(hex);  
 }
+
+
+
 //--------Decoding/Encodeing bit string----
 string string_to_bit(string s) {
     string res = "";

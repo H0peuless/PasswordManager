@@ -12,3 +12,6 @@ All the passwords and usernames stored in the file will be encrypted using the o
 
 The user will get the opportunity to generate a random password. He will be able to choose the kind of alphanumeric parameter he want and the len of the password.
 
+## Credits
+
+The sha256 algorithm used in this repo come's from https://lucidar.me/fr/dev-c-cpp/sha-256-in-c-cpp/

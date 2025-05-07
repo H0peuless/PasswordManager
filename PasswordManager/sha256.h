@@ -1,6 +1,6 @@
 #ifndef SHA256_H
 #define SHA256_H
-
+//from https://lucidar.me/fr/dev-c-cpp/sha-256-in-c-cpp/
 #include <stddef.h>
 #include <stdint.h>
 

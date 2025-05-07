@@ -1,5 +1,5 @@
 #include "sha256.h"
-
+//from https://lucidar.me/fr/dev-c-cpp/sha-256-in-c-cpp/
 // Rotate right
 static inline uint32_t rotr(uint32_t x, int n) {
     return (x >> n) | (x << (32 - n));

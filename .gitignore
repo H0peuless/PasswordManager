@@ -363,3 +363,5 @@ MigrationBackup/
 FodyWeavers.xsd
 /PasswordManager/PasswordManager.vcxproj
 /PasswordManager/PasswordManager.vcxproj.filters
+/PasswordManager/password.dat
+/PasswordManager/test.dat

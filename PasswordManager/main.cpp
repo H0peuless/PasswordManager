@@ -10,6 +10,7 @@
 #include <wx/menu.h>
 #include <wx/toolbar.h>
 #include <wx/msgdlg.h>
+#include <wx/clipbrd.h>
 #include <charconv>
 #include <memory>
 #include <fstream>
@@ -34,7 +35,6 @@ private:
         entries[0].Set(wxACCEL_NORMAL, '\n', wxID_OK);
         entries[1].Set(wxACCEL_ALT, 'x', wxID_CANCEL);
         wxAcceleratorTable accel(2, entries);
-
         parent->SetAcceleratorTable(accel);
     }
 
@@ -218,7 +218,7 @@ private:
     class Data data;
 
 public:
-    MainFrame() : wxFrame(nullptr, wxID_ANY, "Password Manager", wxDefaultPosition, wxSize(800, 600)){
+    MainFrame() : wxFrame(nullptr, wxID_ANY, "Password Manager", wxPoint((width-800) / 2, (height-600)/2), wxSize(800, 600)){
         wxMenuBar* menuBar = new wxMenuBar;
         wxMenu* fileMenu = new wxMenu;
         fileMenu->Append(wxID_NEW, "&New Entry\tCtrl-N");
@@ -228,6 +228,12 @@ public:
         fileMenu->Append(wxID_PAGE_SETUP, "&Parameters");
         menuBar->Append(fileMenu, "&File");
         SetMenuBar(menuBar);
+
+        wxAcceleratorEntry entries[1];
+        entries[0].Set(wxACCEL_CTRL, 'c', wxID_COPY);
+        wxAcceleratorTable accel(1, entries);
+        SetAcceleratorTable(accel);
+
 
         wxToolBar* toolBar = CreateToolBar();
         toolBar->AddTool(wxID_NEW, "New Entry", wxArtProvider::GetBitmap(wxART_PLUS, wxART_TOOLBAR));
@@ -248,6 +254,7 @@ public:
         Bind(wxEVT_MENU, &MainFrame::OnNewEntry, this, wxID_NEW);
         Bind(wxEVT_MENU, &MainFrame::OnDeleteEntry, this, wxID_DELETE);
         Bind(wxEVT_MENU, &MainFrame::OnExit, this, wxID_EXIT);
+        Bind(wxEVT_BUTTON, &MainFrame::OnCopy, this, wxID_COPY);
 
         if (!ShowLoginDialog()) {
             Close();
@@ -307,6 +314,18 @@ private:
                 data.removeInformations(masterPassword, row);
                 RefreshGrid();
             }
+        }
+    }
+    
+    void OnCopy(wxCommandEvent& event) {
+        int col = grid->GetGridCursorCol();
+        int row = grid->GetGridCursorCol();
+        auto info = grid->GetCellValue(row,col);
+
+        if (wxTheClipboard->Open())
+        {
+            wxTheClipboard->SetData(new wxTextDataObject(info));
+            wxTheClipboard->Close();
         }
     }
 

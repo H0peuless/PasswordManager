@@ -29,6 +29,16 @@ private:
     string* resultPassword;
     wxWindow* Parent;
 
+    void setAccel(wxDialog* parent) {
+        wxAcceleratorEntry entries[2];
+        entries[0].Set(wxACCEL_NORMAL, '\n', wxID_OK);
+        entries[1].Set(wxACCEL_ALT, 'x', wxID_CANCEL);
+        wxAcceleratorTable accel(2, entries);
+
+        parent->SetAcceleratorTable(accel);
+    }
+
+
 public:
     LoginDialog(wxWindow* parent, string* password)
         : wxDialog(parent, wxID_ANY, "Password Manager Login", wxPoint((width/2)-150,(height/2)-150), wxSize(300, 150)),
@@ -49,6 +59,7 @@ public:
 
         mainSizer->Add(buttonSizer, 0, wxALIGN_CENTER | wxALL, 5);
 
+        setAccel(this);
         SetSizer(mainSizer);
 
         Bind(wxEVT_BUTTON, &LoginDialog::OnLogin, this, wxID_OK);
@@ -75,11 +86,12 @@ public:
         mainSizer->Add(inputChecker, 0, wxALL | wxEXPAND, 5);
 
         wxBoxSizer* buttonSizer = new wxBoxSizer(wxHORIZONTAL);
-        buttonSizer->Add(new wxButton(this, wxID_OK, "Login"), 0,  5);
-        buttonSizer->Add(new wxButton(this, wxID_CANCEL, "Cancel"), 0, wxALL|wxALIGN_LEFT, 5);
+        buttonSizer->Add(new wxButton(this, wxID_OK, "Login"), 0, wxALL, 5);
+        buttonSizer->Add(new wxButton(this, wxID_CANCEL, "Cancel"), 0, wxALL, 5);
 
-        mainSizer->Add(buttonSizer, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+        mainSizer->Add(buttonSizer, 0, wxALIGN_CENTER | wxALL, 5);
 
+        setAccel(this);
         SetSizer(mainSizer);
 
         Bind(wxEVT_BUTTON, &LoginDialog::OnFirstLogin, this, wxID_OK);
@@ -185,7 +197,6 @@ public:
     }
 
     void OnGeneratePassword(wxCommandEvent& event) {
-        ;
         passwordCtrl->SetValue(generatePassword(passwordSize->GetValue()));
     }
 

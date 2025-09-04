@@ -18,17 +18,21 @@
 #include "info.h"
 
 using namespace std;
+const unsigned int width = GetSystemMetrics(SM_CXSCREEN);
+const unsigned int height = GetSystemMetrics(SM_CYSCREEN);
 
 // GUI Classes
 class LoginDialog : public wxDialog {
 private:
     wxTextCtrl* passwordCtrl;
+    wxTextCtrl* checkPasswordCtrl;
     string* resultPassword;
+    wxWindow* Parent;
 
 public:
     LoginDialog(wxWindow* parent, string* password)
-        : wxDialog(parent, wxID_ANY, "Password Manager Login", wxDefaultPosition, wxSize(300, 150)),
-          resultPassword(password) {
+        : wxDialog(parent, wxID_ANY, "Password Manager Login", wxPoint((width/2)-150,(height/2)-150), wxSize(300, 150)),
+          resultPassword(password),Parent(parent){
         
         wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
         wxBoxSizer* inputSizer = new wxBoxSizer(wxHORIZONTAL);
@@ -50,9 +54,41 @@ public:
         Bind(wxEVT_BUTTON, &LoginDialog::OnLogin, this, wxID_OK);
     }
 
-    void OnLogin(wxCommandEvent& event) {
+    LoginDialog(wxWindow* parent, string* password, string checkPasswoed)
+        : wxDialog(parent, wxID_ANY, "Password Manager Login", wxPoint((width / 2) - 300, (height / 2) - 150), wxSize(600, 300)),
+        resultPassword(password), Parent(parent) {
+        wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
+        wxBoxSizer* inputSizer = new wxBoxSizer(wxHORIZONTAL);
+        wxBoxSizer* inputChecker = new wxBoxSizer(wxHORIZONTAL);
+
+        mainSizer->Add(new wxStaticText(this, wxID_ANY, "Welcome in Password manager\nFor the first usage, please insert your master password and keep it in mind."), 0, wxALL | wxALIGN_LEFT, 5);
+
+        inputSizer->Add(new wxStaticText(this, wxID_ANY, "Password: "), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+        passwordCtrl = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_PASSWORD);
+        inputSizer->Add(passwordCtrl, 1, wxALL | wxEXPAND, 5);
+
+        inputChecker->Add(new wxStaticText(this, wxID_ANY, "Verify your password: "), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+        checkPasswordCtrl = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_PASSWORD);
+        inputChecker->Add(checkPasswordCtrl, 1, wxALL | wxEXPAND, 5);
+
+        mainSizer->Add(inputSizer, 0, wxALL | wxEXPAND, 5);
+        mainSizer->Add(inputChecker, 0, wxALL | wxEXPAND, 5);
+
+        wxBoxSizer* buttonSizer = new wxBoxSizer(wxHORIZONTAL);
+        buttonSizer->Add(new wxButton(this, wxID_OK, "Login"), 0,  5);
+        buttonSizer->Add(new wxButton(this, wxID_CANCEL, "Cancel"), 0, wxALL|wxALIGN_LEFT, 5);
+
+        mainSizer->Add(buttonSizer, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+
+        SetSizer(mainSizer);
+
+        Bind(wxEVT_BUTTON, &LoginDialog::OnFirstLogin, this, wxID_OK);
+
+        }
+
+    void OnLogin(wxCommandEvent& event){
         string password = passwordCtrl->GetValue().ToStdString();
-        
+
         ifstream test("test.dat");
         if (test.good()) {
             fstream file;
@@ -66,23 +102,37 @@ public:
             else {
                 if (key == hashing(obfuscation(password))) {
                     *resultPassword = password;
+                    this->Parent->Show();
                     EndModal(wxID_OK);
                 }
                 else {
                     wxMessageBox("Wrong password!", "Error", wxICON_ERROR);
                 }
             }
-        } else {
-            if (password.length() >= 12) {
-                string key = hashing(obfuscation(password));
-                ofstream file("test.dat", ios::binary);
-                file << key;
-                file.close();
-                *resultPassword = password;
-                EndModal(wxID_OK);
-            } else {
-                wxMessageBox("Password must be at least 12 characters long!", "Error", wxICON_ERROR);
-            }
+        } 
+        
+    }
+    void OnFirstLogin(wxCommandEvent& event) {
+        string password = passwordCtrl->GetValue().ToStdString();
+        string checkPassword = checkPasswordCtrl->GetValue().ToStdString();
+        if (password != checkPassword) {
+            wxMessageBox("The two password should be identic\nPlease try again", "Error", wxICON_ERROR);
+            return;
+        }
+
+        ifstream test("test.dat");
+        if (test.good()) return;
+        if (password.length() >= 12) {
+            string key = hashing(obfuscation(password));
+            ofstream file("test.dat", ios::binary);
+            file << key;
+            file.close();
+            *resultPassword = password;
+            this->Parent->Show();
+            EndModal(wxID_OK);
+        }
+        else {
+            wxMessageBox("Password must be at least 12 characters long!", "Error", wxICON_ERROR);
         }
     }
 };
@@ -157,13 +207,14 @@ private:
     class Data data;
 
 public:
-    MainFrame() : wxFrame(nullptr, wxID_ANY, "Password Manager", wxDefaultPosition, wxSize(800, 600)) {
+    MainFrame() : wxFrame(nullptr, wxID_ANY, "Password Manager", wxDefaultPosition, wxSize(800, 600)){
         wxMenuBar* menuBar = new wxMenuBar;
         wxMenu* fileMenu = new wxMenu;
         fileMenu->Append(wxID_NEW, "&New Entry\tCtrl-N");
         fileMenu->Append(wxID_DELETE, "&Delete Entry\tDel");
         fileMenu->AppendSeparator();
-        fileMenu->Append(wxID_EXIT, "E&xit\tAlt-X");
+        fileMenu->Append(wxID_EXIT, "&Exit\tAlt-X");
+        fileMenu->Append(wxID_PAGE_SETUP, "&Parameters");
         menuBar->Append(fileMenu, "&File");
         SetMenuBar(menuBar);
 
@@ -192,13 +243,17 @@ public:
             return;
         }
 
-        //data.infos = getInformations(masterPassword);
         RefreshGrid();
     }
-
+    
 private:
     bool ShowLoginDialog() {
+        ifstream test("test.dat");
+        if (test.good()) {
         LoginDialog dialog(this, &masterPassword);
+        return dialog.ShowModal() == wxID_OK;
+        }
+        LoginDialog dialog(this, &masterPassword,"First connection");
         return dialog.ShowModal() == wxID_OK;
     }
 
@@ -223,7 +278,7 @@ private:
         }
     }
 
-    void OnNewEntry(wxCommandEvent& event) {
+    void OnNewEntry(wxCommandEvent& event){
         AddEntryDialog dialog(this);
         if (dialog.ShowModal() == wxID_OK) {
             Informations info = dialog.GetEntryData();
@@ -251,9 +306,8 @@ private:
 
 class PasswordManagerApp : public wxApp {
 public:
-    bool OnInit() {
+    bool OnInit(){
         MainFrame* frame = new MainFrame();
-        frame->Show();
         return true;
     }
 };
